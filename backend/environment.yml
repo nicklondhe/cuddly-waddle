@@ -1,0 +1,14 @@
+name: cuddly-waddle
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - fastapi
+  - uvicorn
+  - python-dotenv
+  - pip
+  - pip:
+    - langchain==0.0.350
+    - anthropic==0.8.1
+    - wikipedia==1.4.0
