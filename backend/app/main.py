@@ -8,6 +8,7 @@ from scripts.puzzle_generator import PuzzleGenerator
 
 
 app = FastAPI()
+puzzlegen = PuzzleGenerator(DATA_DIR)
 
 # Add CORS middleware for local development
 app.add_middleware(
@@ -21,6 +22,5 @@ app.add_middleware(
 @app.get("/puzzle", response_model=PuzzleResponse)
 async def generate_puzzle():
     '''Get a puzzle'''
-    pg = PuzzleGenerator(DATA_DIR)
-    puzzle = pg.get_new_puzzle()
+    puzzle = await puzzlegen.get_new_puzzle()
     return PuzzleResponse.from_category_dict(puzzle)

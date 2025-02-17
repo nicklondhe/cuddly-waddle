@@ -24,12 +24,12 @@ class PuzzleResponse(BaseModel):
         '''Convert puzzle dict to PuzzleResponse'''
         items = []
         groups = []
-        
+
         # Create groups and items
         for group_id, (theme, movies) in enumerate(category_dict.items(), 1):
             # Add group
             groups.append(PuzzleGroup(id=group_id, theme=theme))
-            
+
             # Add items for this group
             for movie in movies:
                 items.append(PuzzleItem(
@@ -37,9 +37,5 @@ class PuzzleResponse(BaseModel):
                     text=movie,
                     group_id=group_id
                 ))
-        
-        # Shuffle items (optional, you can remove if you want to shuffle elsewhere)
-        import random
-        random.shuffle(items)
-        
+
         return cls(items=items, groups=groups)

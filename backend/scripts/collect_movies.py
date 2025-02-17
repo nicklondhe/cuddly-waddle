@@ -1,23 +1,14 @@
 '''Download movie wikipedia pages'''
-from pathlib import Path
 from typing import Dict, List
 
 import json
-import os
 import random
 import time
 
-from dotenv import load_dotenv
-from langchain_anthropic.chat_models import ChatAnthropic
-from langchain.output_parsers.json import SimpleJsonOutputParser
-from langchain.prompts import PromptTemplate
-
 import wikipediaapi
 
-from backend.app.models.movies import MovieData
-
-
-load_dotenv()
+from app import DATA_DIR
+from app.services.movie_service import MovieDataService
 
 
 class BollywoodDataCollector:
@@ -28,32 +19,11 @@ class BollywoodDataCollector:
             'CuddlyWaddle (nikhillo@buffalo.edu)',  # Replace with your email
             'en'
         )
-        self.llm = ChatAnthropic(
-            model="claude-3-opus-latest",
-            anthropic_api_key=os.getenv('CLAUDE_API_KEY'),
-            temperature=0.2
-        )
 
-        self.parser = SimpleJsonOutputParser(pydantic_object=MovieData)
-
-        prompt = PromptTemplate(
-            template="""Extract structured movie data from the following Wikipedia content and return it as JSON.
-
-            Do not include any introductory text, explanations, or markdown formatting - return ONLY the JSON object.
-
-            {format_instructions}
-
-            Content: {content}
-
-            Remember: Return the JSON object only, with no additional text before or after.""",
-            input_variables=["content"],
-            partial_variables={"format_instructions": self.parser.get_format_instructions()}
-        )
-
-        self.chain = prompt | self.llm | self.parser
+        self.movie_service = MovieDataService()
 
         # Create data directory if it doesn't exist
-        self.data_dir = Path("../data")
+        self.data_dir = DATA_DIR
         self.data_dir.mkdir(exist_ok=True)
 
         # Keep track of processed pages
@@ -94,28 +64,29 @@ class BollywoodDataCollector:
                 break
         return pages[:max_pages]
 
-    def extract_movie_data(self, page_title: str) -> Dict:
+    async def extract_movie_data(self, page_title: str) -> Dict:
         '''Extract movie data using langchain + wikipedia api'''
         try:
             page = self.wiki.page(page_title)
             if not page.exists():
                 return None
 
-            movie_data = self.chain.invoke({"content": page.text})
+            movie_data = await self.movie_service.extract_movie_data(page.text)
+
             return movie_data
 
         except Exception as e:
             print(f"Error processing {page_title}: {str(e)}")
             return None
 
-    def collect_and_save(self, category_name: str, max_pages: int):
+    async def collect_and_save(self, category_name: str, max_pages: int):
         '''Collect pages for the given category and save them to disk'''
         pages = self.get_category_members(category_name, max_pages)
 
         for page_title in pages:
             print (f'Processing: {page_title}')
 
-            movie_data = self.extract_movie_data(page_title)
+            movie_data = await self.extract_movie_data(page_title)
             if movie_data:
                 # Save individual movie data
                 output_file = self.data_dir / f"{page_title.replace('/', '_')}.json"
