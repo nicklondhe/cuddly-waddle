@@ -24,8 +24,12 @@ class PuzzleGenerator:
         """Load all movie data from JSON files in the data directory."""
         movies = []
         for json_file in self.data_directory.glob("*.json"):
+            if json_file == 'processed_pages.json':
+                continue
+
             with open(json_file, 'r', encoding='utf-8') as f:
                 movies.append(json.load(f))
+        print (f'Loaded {len(movies)} movies')
         return movies
 
     def generate_candidate_set(self, size: int = 25) -> List[Dict]:
@@ -51,6 +55,8 @@ class PuzzleGenerator:
 
             # Calculate diversity score based on new information this movie would add
             score = 0
+            decade = None
+
             if movie['director'] and movie['director'] not in directors:
                 score += 1
             for genre in movie['genres']:
@@ -67,7 +73,8 @@ class PuzzleGenerator:
                 if movie['director']:
                     directors.add(movie['director'])
                 genres.update(movie['genres'])
-                decades.add(decade)
+                if decade:
+                    decades.add(decade)
 
         return selected
 
@@ -95,6 +102,8 @@ class PuzzleGenerator:
         Please format your response as a JSON object where each key is the category name/connection,
         and the value is a list of 4 movie titles that belong to that category. Make sure each movie is used exactly once.
 
+        Make sure that the response is always a proper JSON object, ignore any movies that do not fit the request etc.
+
         Movies:
         """
         prompt += "\n---\n".join(movies_data)
@@ -109,6 +118,7 @@ class PuzzleGenerator:
 
         # Check we have exactly 4 groups
         if len(grouping) != 4:
+            print (f'Total groups = {len(grouping)}')
             return False
 
         # Keep track of used movies
@@ -118,13 +128,16 @@ class PuzzleGenerator:
         for group in grouping.values():
             # Each group should have exactly 4 movies
             if len(group) != 4:
+                print (f'Invalid group: {group}')
                 return False
 
             # Each movie should exist in our dataset
             for movie in group:
                 if movie not in movie_titles:
+                    print (f'Unknown movie: {movie}')
                     return False
                 if movie in used_movies:
+                    print (f'Doubly used movie: {movie}')
                     return False
                 used_movies.add(movie)
 
@@ -141,7 +154,7 @@ def get_puzzle(prompt_str: str) -> Dict:
     parser = SimpleJsonOutputParser() #TODO: parse errors
     chain = prompt | llm | parser
     output = chain.invoke({})
-    return json.loads(output)
+    return json.loads(output) if isinstance(output, str) else output
 
 def main():
     '''Entrypoint method'''
@@ -149,12 +162,14 @@ def main():
     generator = PuzzleGenerator("../data")
 
     # Generate candidate set
-    candidates = generator.generate_candidate_set(25)
+    candidates = generator.generate_candidate_set(30)
 
     # Generate prompt
     prompt = generator.generate_prompt(candidates)
 
     puzzle = get_puzzle(prompt)
+
+    print(f'Puzzle: {puzzle}')
 
     # Validate
     is_valid = generator.validate_grouping(puzzle, candidates)
