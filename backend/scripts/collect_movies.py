@@ -47,13 +47,15 @@ class BollywoodDataCollector:
         self.parser = SimpleJsonOutputParser(pydantic_object=MovieData)
 
         prompt = PromptTemplate(
-            template="""Extract structured movie data from the following Wikipedia content.
-            
+            template="""Extract structured movie data from the following Wikipedia content and return it as JSON.
+
+            Do not include any introductory text, explanations, or markdown formatting - return ONLY the JSON object.
+
             {format_instructions}
-            
+
             Content: {content}
-            
-            Return only the requested JSON structure.""",
+
+            Remember: Return the JSON object only, with no additional text before or after.""",
             input_variables=["content"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
