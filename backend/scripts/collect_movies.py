@@ -1,6 +1,6 @@
 '''Download movie wikipedia pages'''
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import json
 import os
@@ -11,24 +11,14 @@ from dotenv import load_dotenv
 from langchain_anthropic.chat_models import ChatAnthropic
 from langchain.output_parsers.json import SimpleJsonOutputParser
 from langchain.prompts import PromptTemplate
-from pydantic import BaseModel, Field
 
 import wikipediaapi
+
+from backend.app.models.movies import MovieData
 
 
 load_dotenv()
 
-class MovieData(BaseModel):
-    '''Movie data model'''
-    title: str = Field(description="The title of the movie")
-    year: int = Field(description="Release year of the movie")
-    director: Optional[str] = Field(description="Name of the movie's director")
-    main_cast: List[str] = Field(description="List of up to 5 main actors in the movie")
-    music_director: Optional[str] = Field(description="Name of the music director")
-    producer: Optional[str] = Field(description="Name of the movie's producer")
-    genres: List[str] = Field(description="List of genres for the movie")
-    plot_themes: List[str] = Field(description="3-4 major themes or elements from the plot")
-    awards: List[str] = Field(description="Major awards won by the movie")
 
 class BollywoodDataCollector:
     '''Data collector from wikipedia'''

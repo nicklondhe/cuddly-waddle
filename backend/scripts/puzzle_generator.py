@@ -143,6 +143,12 @@ class PuzzleGenerator:
 
         # Check we used exactly 16 movies
         return len(used_movies) == 16
+    
+    def get_new_puzzle(self) -> Dict:
+        '''Generates a new puzzle'''
+        candidates = self.generate_candidate_set(30)
+        prompt = self.generate_prompt(candidates)
+        return get_puzzle(prompt)
 
 def get_puzzle(prompt_str: str) -> Dict:
     '''Generate puzzle using claude'''
