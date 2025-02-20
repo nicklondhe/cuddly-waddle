@@ -23,4 +23,4 @@ app.add_middleware(
 async def generate_puzzle():
     '''Get a puzzle'''
     puzzle = await puzzlegen.get_new_puzzle()
-    return PuzzleResponse.from_category_dict(puzzle)
+    return PuzzleResponse.from_category_dict(puzzle) if puzzle else "Could not generate puzzle!"
