@@ -20,9 +20,14 @@ class PuzzleService(BaseLLMService):
             Each category should have a clear, specific connection (e.g., same director, similar themes, awards, decade of release, etc.).
 
             Please format your response as a JSON object where each key is the category name/connection,
-            and the value is a list of 4 movie titles that belong to that category. Make sure each movie is used exactly once.
+            and the value is a list of 4 movie titles that belong to that category. 
+
+            IMPORTANT: Make sure that each movie is used EXACTLY once and that each category has four films
 
             Make sure that the response is always a proper JSON object, ignore any movies that do not fit the request etc.
+            Do not include any introductory text, explanations, or markdown formatting - return ONLY the JSON object.
+
+            Return an empty object if unable to generate connections as requested
 
             Movies:
             {movies}
