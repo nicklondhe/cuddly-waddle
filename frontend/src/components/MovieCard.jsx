@@ -27,7 +27,7 @@ const MovieCard = ({ title, isSelected, onClick }) => {
         boxShadow: 'md',
         borderColor: isSelected ? selectedBorderColor : 'gray.300'
       }}
-      height="100%"
+      height="80px"  // Fixed height
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -35,6 +35,9 @@ const MovieCard = ({ title, isSelected, onClick }) => {
       <Text
         fontWeight="medium"
         textAlign="center"
+        fontSize="sm"  // Smaller font size
+        noOfLines={3}  // Show max 3 lines
+        overflow="hidden"
       >
         {title}
       </Text>
