@@ -11,9 +11,10 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
+  Spinner,
   Text,
   VStack,
-  useColorModeValue,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { CheckIcon, CloseIcon, QuestionIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
@@ -23,21 +24,53 @@ import {
   initializeGameState,
   shuffleArray
 } from '../game/gameLogic';
+import { useEffect, useRef, useState } from 'react';
 
 import MovieCard from './MovieCard';
-import { sampleData } from '../data/sampleData';
-import { useState } from 'react';
 
 const GameBoard = () => {
-  const [movies, setMovies] = useState(() => initializeGameState(sampleData.items));
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [puzzleData, setPuzzleData] = useState(null);  
+  const [movies, setMovies] = useState([]);
   const [completedGroups, setCompletedGroups] = useState([]);
   const [attemptsLeft, setAttemptsLeft] = useState(4);
   const [showHelp, setShowHelp] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isGameOver, setIsGameOver] = useState(false);
+  const hasFetchedPuzzle = useRef(false);
 
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  useEffect(() => {
+    const fetchPuzzle = async () => {
+        try {
+            const response = await fetch ('/puzzle', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                  }
+            });
+            
+            if (!response.ok) {
+                throw new Error ('Failed to load puzzle!');
+            }
+
+            const data = await response.json();
+            setPuzzleData(data);
+            setMovies(initializeGameState(data.items));
+            setIsLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setIsLoading(false);
+        }
+    };
+    
+    if (!hasFetchedPuzzle.current) {
+        fetchPuzzle();
+        hasFetchedPuzzle.current = true;
+    }
+  }, []);
 
   const handleMovieClick = (clickedId) => {
     setMovies(movies.map(movie => {
@@ -81,7 +114,7 @@ const GameBoard = () => {
     }
 
     // Handle correct guess
-    const theme = getGroupTheme(sampleData.groups, result.groupId);
+    const theme = getGroupTheme(puzzleData.groups, result.groupId);
     setCompletedGroups([...completedGroups, { 
       movies: selectedMovies,
       theme,
@@ -109,12 +142,47 @@ const GameBoard = () => {
   };
 
   const restartGame = () => {
-    setMovies(initializeGameState(sampleData.items));
+    setMovies(initializeGameState(puzzleData.items));
     setCompletedGroups([]);
     setAttemptsLeft(4);
     setIsGameOver(false);
     setShowError(false);
   };
+
+  if (isLoading) {
+    return (
+      <Box
+        position="fixed"
+        top="50%"
+        left="50%"
+        transform="translate(-50%, -50%)"
+      >
+        <VStack spacing={4}>
+          <Spinner
+            thickness="4px"
+            speed="0.65s"
+            emptyColor="gray.200"
+            color="blue.500"
+            size="xl"
+          />
+          <Text>Loading puzzle...</Text>
+        </VStack>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        position="fixed"
+        top="50%"
+        left="50%"
+        transform="translate(-50%, -50%)"
+      >
+        <Text color="red.500">Error loading puzzle: {error}</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -301,13 +369,13 @@ const GameBoard = () => {
             )}
             
             <Text mt={4}>The remaining groups were:</Text>
-            {sampleData.groups
+            {puzzleData.groups
               .filter(g => !completedGroups.find(cg => cg.groupId === g.id))
               .map(group => (
                 <Box key={group.id} mb={3}>
                   <Text fontWeight="bold">{group.theme}</Text>
                   <Text fontSize="sm">
-                    {sampleData.items
+                    {puzzleData.items
                       .filter(item => item.group_id === group.id)
                       .map(m => m.text)
                       .join(', ')}
