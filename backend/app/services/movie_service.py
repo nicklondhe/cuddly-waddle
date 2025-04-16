@@ -1,5 +1,6 @@
 '''A movie data extraction service'''
 from langchain.output_parsers.json import SimpleJsonOutputParser
+from loguru import logger
 
 from app.models.movies import MovieData
 from app.services.base import BaseLLMService
@@ -8,6 +9,7 @@ from app.services.base import BaseLLMService
 class MovieDataService(BaseLLMService):
     '''Service impl'''
     def __init__(self):
+        logger.info("Initializing MovieDataService")
         super().__init__()
         self.parser = None
         self.chain = None
@@ -30,5 +32,14 @@ class MovieDataService(BaseLLMService):
 
     async def extract_movie_data(self, content: str) -> MovieData:
         """Extract structured data from movie content"""
-        result = await self.chain.ainvoke({"content": content})
-        return result
+        try:
+            logger.info("Extracting movie data from content")
+            content_preview = content[:100] + "..." if len(content) > 100 else content
+            logger.debug(f"Content preview: {content_preview}")
+
+            result = await self.chain.ainvoke({"content": content})
+            logger.info(f"Successfully extracted data for movie: {result.title if hasattr(result, 'title') else 'Unknown'}")
+            return result
+        except Exception as e:
+            logger.error(f"Error extracting movie data: {str(e)}")
+            raise

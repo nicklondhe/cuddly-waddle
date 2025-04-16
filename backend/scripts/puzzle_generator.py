@@ -3,6 +3,8 @@ from typing import List, Dict
 from pathlib import Path
 import random
 
+from loguru import logger
+
 from app.models.movies import MovieData
 from app.services.puzzle_service import PuzzleService
 
@@ -22,12 +24,12 @@ class PuzzleGenerator:
                 continue
             movies.append(MovieData.from_json_file(json_file))
 
-        print (f'Loaded {len(movies)} movies')
+        logger.info(f'Loaded {len(movies)} movies')
         return movies
 
     def generate_candidate_set(self, size: int = 25) -> List[str]:
         """Generate a diverse subset of movies for puzzle creation."""
-        print("Generating candidates!")
+        logger.info("Generating candidates!")
         if size > len(self.movies):
             return self.movies
 
@@ -73,13 +75,13 @@ class PuzzleGenerator:
 
     def validate_grouping(self, grouping: Dict[str, List[str]], movies: List[Dict]) -> bool:
         """Validate that the grouping uses each movie exactly once and has 4 groups of 4."""
-        print ("Validating groups!")
+        logger.info("Validating groups!")
         # Convert movies to set of titles for easy lookup
         movie_titles = {movie['title'] for movie in movies}
 
         # Check we have exactly 4 groups
         if len(grouping) != 4:
-            print (f'Total groups = {len(grouping)}')
+            logger.error(f'Total groups = {len(grouping)}')
             return False
 
         # Keep track of used movies
@@ -89,16 +91,16 @@ class PuzzleGenerator:
         for group in grouping.values():
             # Each group should have exactly 4 movies
             if len(group) != 4:
-                print (f'Invalid group: {group}')
+                logger.error(f'Invalid group: {group}')
                 return False
 
             # Each movie should exist in our dataset
             for movie in group:
                 if movie not in movie_titles:
-                    print (f'Unknown movie: {movie}')
+                    logger.error(f'Unknown movie: {movie}')
                     return False
                 if movie in used_movies:
-                    print (f'Doubly used movie: {movie}')
+                    logger.error(f'Doubly used movie: {movie}')
                     return False
                 used_movies.add(movie)
 

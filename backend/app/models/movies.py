@@ -4,6 +4,7 @@ from typing import List, Optional
 
 import json
 
+from loguru import logger
 from pydantic import BaseModel, Field
 
 
@@ -22,9 +23,19 @@ class MovieData(BaseModel):
     @classmethod
     def from_json_file(cls, file_path: Path | str) -> 'MovieData':
         """Load and validate movies from a JSON file"""
-        with open(file_path, 'r', encoding='utf-8') as f:
-            movie_json = json.load(f)
-            return cls.model_validate(movie_json)
+        try:
+            logger.debug(f"Loading movie data from {file_path}")
+            with open(file_path, 'r', encoding='utf-8') as f:
+                movie_json = json.load(f)
+                movie_data = cls.model_validate(movie_json)
+                logger.debug(f"Successfully loaded movie: {movie_data.title}")
+                return movie_data
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error in {file_path}: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading movie from {file_path}: {str(e)}")
+            raise
 
     def format_for_prompt(self) -> str:
         """Format movie data for LLM prompt"""

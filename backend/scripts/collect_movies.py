@@ -7,6 +7,8 @@ import time
 
 import wikipediaapi
 
+from loguru import logger
+
 from app import DATA_DIR
 from app.services.movie_service import MovieDataService
 
@@ -76,7 +78,7 @@ class BollywoodDataCollector:
             return movie_data
 
         except Exception as e:
-            print(f"Error processing {page_title}: {str(e)}")
+            logger.error(f"Error processing {page_title}: {str(e)}")
             return None
 
     async def collect_and_save(self, category_name: str, max_pages: int):
@@ -84,7 +86,7 @@ class BollywoodDataCollector:
         pages = self.get_category_members(category_name, max_pages)
 
         for page_title in pages:
-            print (f'Processing: {page_title}')
+            logger.info(f'Processing: {page_title}')
 
             movie_data = await self.extract_movie_data(page_title)
             if movie_data:
