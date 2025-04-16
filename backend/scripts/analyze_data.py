@@ -2,6 +2,8 @@
 from pathlib import Path
 import json
 
+from loguru import logger
+
 def analyze_collected_data():
     '''Print stats'''
     data_dir = Path("../data")
@@ -53,21 +55,21 @@ def analyze_collected_data():
             if not data.get(field):
                 missing_fields[field] += 1
 
-    # Print analysis
-    print(f"\nTotal movies collected: {total_movies}")
-    print("\nYears distribution:")
+    # Log analysis
+    logger.info(f"Total movies collected: {total_movies}")
+    logger.info("Years distribution:")
     for year in sorted(years_distribution.keys()):
-        print(f"{year}: {years_distribution[year]} movies")
+        logger.info(f"{year}: {years_distribution[year]} movies")
 
-    print(f"\nUnique genres found: {len(genres)}")
-    print(genres)
+    logger.info(f"Unique genres found: {len(genres)}")
+    logger.info(f"Genres: {genres}")
 
-    print(f"\nUnique directors found: {len(directors)}")
+    logger.info(f"Unique directors found: {len(directors)}")
 
-    print("\nMissing fields analysis:")
+    logger.info("Missing fields analysis:")
     for field, count in missing_fields.items():
         percentage = (count / total_movies) * 100
-        print(f"{field}: {count} movies ({percentage:.1f}%)")
+        logger.info(f"{field}: {count} movies ({percentage:.1f}%)")
 
 if __name__ == "__main__":
     analyze_collected_data()
