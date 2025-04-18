@@ -4,7 +4,7 @@ import {
   useColorModeValue
 } from '@chakra-ui/react';
 
-import React from 'react';
+import PropTypes from 'prop-types';
 
 const MovieCard = ({ title, isSelected, onClick }) => {
   const bgColor = useColorModeValue('white', 'gray.700');
@@ -43,6 +43,12 @@ const MovieCard = ({ title, isSelected, onClick }) => {
       </Text>
     </Box>
   );
+};
+
+MovieCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired
 };
 
 export default MovieCard;
