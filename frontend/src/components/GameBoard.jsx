@@ -45,24 +45,76 @@ const GameBoard = () => {
   useEffect(() => {
     const fetchPuzzle = async () => {
         try {
-            const response = await fetch ('/puzzle', {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                  }
-            });
+            let data;
             
-            if (!response.ok) {
-                throw new Error ('Failed to load puzzle!');
+            // Check if we're in development or production
+            if (import.meta.env.DEV) {
+                // In dev, use the backend API
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                const url = `${apiUrl}/puzzle`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error ('Failed to load puzzle from API!');
+                }
+                
+                data = await response.json();
+            } else {
+                // In production, use static puzzles
+                try {
+                    // First try to load the index of puzzles
+                    const indexResponse = await fetch('/puzzles/index.json');
+                    
+                    if (!indexResponse.ok) {
+                        throw new Error('Failed to load puzzle index');
+                    }
+                    
+                    const indexData = await indexResponse.json();
+                    
+                    // Select a random puzzle from the index
+                    const puzzleCount = indexData.puzzles.length;
+                    const randomPuzzleId = Math.floor(Math.random() * puzzleCount) + 1;
+                    
+                    const puzzleResponse = await fetch(`/puzzles/puzzle_${randomPuzzleId}.json`);
+                    
+                    if (!puzzleResponse.ok) {
+                        throw new Error(`Failed to load puzzle ${randomPuzzleId}`);
+                    }
+                    
+                    data = await puzzleResponse.json();
+                } catch (staticError) {
+                    console.error('Error loading static puzzle:', staticError);
+                    // Fallback to sample data if there's an error
+                    import('../data/sampleData.js').then(module => {
+                        data = module.sampleData;
+                        setPuzzleData(data);
+                        setMovies(initializeGameState(data.items));
+                        setIsLoading(false);
+                    });
+                    return; // Exit early since we're handling this asynchronously
+                }
             }
-
-            const data = await response.json();
+            
             setPuzzleData(data);
             setMovies(initializeGameState(data.items));
             setIsLoading(false);
         } catch (err) {
+            console.error('Error loading puzzle:', err);
             setError(err.message);
-            setIsLoading(false);
+            
+            // Fallback to sample data if there's an error
+            import('../data/sampleData.js').then(module => {
+                const data = module.sampleData;
+                setPuzzleData(data);
+                setMovies(initializeGameState(data.items));
+                setIsLoading(false);
+            });
         }
     };
     
@@ -208,7 +260,7 @@ const GameBoard = () => {
         <VStack spacing={5} align="center">
           <Heading 
             size="xl" 
-            color={useColorModeValue("gray.800", "white")}
+            color="gray.800"
             textAlign="center"
             mb={2}
           >
@@ -223,8 +275,8 @@ const GameBoard = () => {
                 h="12px"
                 borderRadius="full"
                 border="2px solid"
-                borderColor={useColorModeValue("gray.800", "white")}
-                bg={attempt > attemptsLeft ? useColorModeValue("gray.800", "white") : useColorModeValue("white", "gray.800")}
+                borderColor="gray.800"
+                bg={attempt > attemptsLeft ? "gray.800" : "white"}
               />
             ))}
           </HStack>
@@ -243,7 +295,7 @@ const GameBoard = () => {
                   key={group.groupId}
                   p={4}
                   mb={3}
-                  bg={useColorModeValue(`${colorScheme}.50`, `${colorScheme}.900`)}
+                  bg={`${colorScheme}.50`}
                   borderLeft="4px solid"
                   borderLeftColor={`${colorScheme}.500`}
                   borderRadius="md"
@@ -258,7 +310,7 @@ const GameBoard = () => {
                   </Heading>
                   <Text 
                     fontSize="sm" 
-                    color={useColorModeValue('gray.600', 'gray.300')}
+                    color="gray.600"
                   >
                     {group.movies.map(m => m.text).join(' • ')}
                   </Text>
@@ -284,12 +336,12 @@ const GameBoard = () => {
             {showError && (
               <Box
                 textAlign="center"
-                color={useColorModeValue("red.600", "red.300")}
+                color="red.600"
                 fontWeight="medium"
                 fontSize="sm"
                 py={2}
                 px={4}
-                bg={useColorModeValue("red.50", "rgba(254, 178, 178, 0.1)")}
+                bg="red.50"
                 borderRadius="md"
               >
                 {errorMessage}
@@ -355,7 +407,7 @@ const GameBoard = () => {
           <ModalHeader>Game Over!</ModalHeader>
           <ModalBody pb={6}>
             <Text mb={4}>
-              You've run out of attempts. Here are the groups you found:
+              You&apos;ve run out of attempts. Here are the groups you found:
             </Text>
             {completedGroups.length > 0 ? (
               completedGroups.map(group => (

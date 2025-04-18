@@ -1,7 +1,5 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-
 import GameBoard from './components/GameBoard';
-import React from 'react';
 
 function App() {
   return (
